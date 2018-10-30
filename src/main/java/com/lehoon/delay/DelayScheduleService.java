@@ -21,11 +21,6 @@ public final class DelayScheduleService {
     private ThreadPoolExecutor threadPoolExecutor;
 
     /**
-     * 调度线程服务
-     */
-    private ExecutorService executorService;
-
-    /**
      * 延迟队列
      */
     private DelayQueue<AbstractDelayedTask> delayedTaskDelayQueue = new DelayQueue<AbstractDelayedTask>();
@@ -42,10 +37,12 @@ public final class DelayScheduleService {
         }
 
         running = true;
-        executorService = Executors.newSingleThreadExecutor();
-        executorService.submit(new ScheduleThread());
-        logger.info("延迟调度任务已经启动.");
+        Thread scheduleThread = new Thread(new ScheduleThread());
+        scheduleThread.setName("DelayScheduleTaskServiceThread");
+        scheduleThread.setDaemon(true);
+        scheduleThread.start();
 
+        logger.info("延迟调度任务已经启动.");
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -61,7 +58,6 @@ public final class DelayScheduleService {
         }
 
         running = false;
-        executorService.shutdown();
     }
 
     /**
@@ -87,13 +83,18 @@ public final class DelayScheduleService {
         Logger logger = LoggerFactory.getLogger(ScheduleThread.class);
         @Override
         public void run() {
+            AbstractDelayedTask task = null;
             while (running) {
                 try{
-                    AbstractDelayedTask task = delayedTaskDelayQueue.take();
-                    logger.info("开始执行延迟任务,编号:{}", task.getTaskId());
-                    threadPoolExecutor.submit(task);
+                    //获取延迟任务
+                    task = delayedTaskDelayQueue.poll(3, TimeUnit.SECONDS);
+
+                    if(task != null) {
+                        logger.info("开始执行延迟任务, 任务信息:{}", task);
+                        threadPoolExecutor.submit(task);
+                    }
                 } catch (InterruptedException e) {
-                    logger.error("延迟调度线程异常:{}", e.toString());
+                    logger.error("延迟调度线程异常:{}, 任务信息:{}", e, task);
                 }
             }
         }

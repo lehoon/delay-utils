@@ -89,4 +89,10 @@ public abstract class AbstractDelayedTask implements Delayed, Runnable {
     public void setTaskId(String taskId) {
         this.taskId = taskId;
     }
+
+    @Override
+    public String toString() {
+        return String.format("taskId:%s, createTime:%d, startTime:%d, expireTime:%d",
+                taskId, createTime != null ? createTime.getTime() : 0, startTime, expireTime);
+    }
 }

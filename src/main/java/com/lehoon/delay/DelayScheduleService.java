@@ -24,7 +24,8 @@ public final class DelayScheduleService {
      * 延迟队列
      */
     private DelayQueue<AbstractDelayedTask> delayedTaskDelayQueue = new DelayQueue<AbstractDelayedTask>();
-    private boolean running = false;
+    private volatile boolean running = false;
+    private Thread scheduleThread = null;
     private static Logger logger = LoggerFactory.getLogger(DelayScheduleService.class);
 
     /**
@@ -37,7 +38,7 @@ public final class DelayScheduleService {
         }
 
         running = true;
-        Thread scheduleThread = new Thread(new ScheduleThread());
+        scheduleThread = new Thread(new ScheduleThread());
         scheduleThread.setName("DelayScheduleTaskServiceThread");
         scheduleThread.setDaemon(true);
         scheduleThread.start();
@@ -58,6 +59,10 @@ public final class DelayScheduleService {
         }
 
         running = false;
+
+        if(scheduleThread != null && scheduleThread.isAlive()) {
+            scheduleThread.interrupt();
+        }
     }
 
     /**
@@ -87,7 +92,7 @@ public final class DelayScheduleService {
             while (running) {
                 try{
                     //获取延迟任务
-                    task = delayedTaskDelayQueue.poll(3, TimeUnit.SECONDS);
+                    task = delayedTaskDelayQueue.poll(1, TimeUnit.SECONDS);
 
                     if(task != null) {
                         logger.info("开始执行延迟任务, 任务信息:{}", task);

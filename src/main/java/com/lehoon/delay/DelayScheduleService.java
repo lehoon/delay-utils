@@ -38,7 +38,7 @@ public final class DelayScheduleService {
         }
 
         running = true;
-        scheduleThread = new Thread(new ScheduleThread());
+        scheduleThread = new Thread(new ScheduleTask());
         scheduleThread.setName("DelayScheduleTaskServiceThread");
         scheduleThread.setDaemon(true);
         scheduleThread.start();
@@ -84,8 +84,8 @@ public final class DelayScheduleService {
     /**
      * 调度延迟任务并执行
      */
-    final class ScheduleThread implements Runnable {
-        Logger logger = LoggerFactory.getLogger(ScheduleThread.class);
+    final class ScheduleTask implements Runnable {
+        Logger logger = LoggerFactory.getLogger(ScheduleTask.class);
         @Override
         public void run() {
             AbstractDelayedTask task = null;
